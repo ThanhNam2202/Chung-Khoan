@@ -3,21 +3,19 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
 using System.Security.Permissions;
-using System.Text;
 using System.Windows.Forms;
 
 namespace CHUNGKHOANv1
 {
     public partial class Form1 : DevExpress.XtraEditors.XtraForm
     {
-        // private String sqlQuery = "SELECT MACP AS [MACP],  GIAMUA2 AS [GIA MUA 2], KHOILUONG_MUA2 AS [KLM2]," + 
-        //     "GIAMUA1 AS [GIA MUA 1], KHOILUONG_MUA1 AS [KLM 1], GIAKHOP AS [GIÁ KHỚP], KL_KHOP AS [KL KHỚP]," + 
-        //     "GIABAN1 AS [GIA BAN 1], KHOILUONG_BAN1 AS [KLB1], GIABAN2 AS [GIA BAN 2], KHOILUONG_BAN2 AS [KLB2] FROM dbo.BANGGIA";
+        private String sqlQuery = "SELECT MACP AS [MÃ CP],  GIAMUA2 AS [GIÁ MUA 2]," +
+            "KHOILUONG_MUA2 AS [KLM 2], GIAMUA1 AS [GIÁ MUA 1], KHOILUONG_MUA1 AS [KLM 1]," +
+            "GIAKHOP AS [GIÁ KHỚP], KL_KHOP AS [KL KHỚP], GIABAN1 AS [GIÁ BÁN 1]," +
+            "KHOILUONG_BAN1 AS [KLB 1], GIABAN2 AS [GIÁ BÁN 2]," +
+            "KHOILUONG_BAN2 AS [KLB 2] FROM dbo.BANGGIA";
 
-        private String sqlQuery = "SELECT MACP AS [MACP],  GIAMUA2 AS [GIA MUA 2], KHOILUONG_MUA2 AS [KLM2], GIAMUA1 AS [GIA MUA 1], KHOILUONG_MUA1 AS [KLM 1], GIAKHOP AS [GIÁ KHỚP], KL_KHOP AS [KL KHỚP], GIABAN1 AS [GIA BAN 1], KHOILUONG_BAN1 AS [KLB1], GIABAN2 AS [GIA BAN 2], KHOILUONG_BAN2 AS [KLB2] FROM dbo.BANGGIA";
         public Form1()
         {
             InitializeComponent();
@@ -33,16 +31,15 @@ namespace CHUNGKHOANv1
                 return true;
 
             }
-            catch
+            catch(Exception ex)
             {
-                MessageBox.Show("Loi");
+                MessageBox.Show(ex.Message);
                 return false;
             }
         }
 
-        private void GetStarted()
+        private void GetStart()
         {
-            Program.changeCount = 0;
             SqlDependency.Stop(Program.connstr);
             try
             {
@@ -50,7 +47,7 @@ namespace CHUNGKHOANv1
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error during initial connection", MessageBoxButtons.OK);
+                MessageBox.Show(ex.Message, "Lỗi Dependency!\n", MessageBoxButtons.OK);
                 return;
             }
             if (Program.connection == null)
@@ -64,10 +61,11 @@ namespace CHUNGKHOANv1
 
             if (Program.dataToWatch == null)
                 Program.dataToWatch = new DataSet();
-            GetData();
+
+            LoadData();
         }
 
-        private void GetData()
+        private void LoadData()
         {
             Program.dataToWatch.Clear();
             Program.command.Notification = null;
@@ -81,16 +79,12 @@ namespace CHUNGKHOANv1
 
                 this.dataGridView.DataSource = Program.dataToWatch;
                 this.dataGridView.DataMember = Program.tableName;
-                try
-                {
-                    this.dataGridView.ClearSelection();
-                    this.dataGridView.Rows[Program.vitriRow].Cells[Program.vitriColumn].Selected = true;
-                }
-                catch (Exception)
-                {
-                    this.dataGridView.ClearSelection();
-                }
 
+                for(int i = 0; i < 10; i++)
+                {
+                    this.dataGridView.Columns[i].Width = 63;
+                }
+                this.dataGridView.Columns[10].Width = 74;
             }
         }
 
@@ -109,7 +103,8 @@ namespace CHUNGKHOANv1
             SqlDependency dependency = (SqlDependency)sender;
 
             dependency.OnChange -= dependency_OnChange;
-            GetData();
+
+            LoadData();
         }
 
         private void lENHKHOPBindingNavigatorSaveItem_Click(object sender, EventArgs e)
@@ -124,27 +119,23 @@ namespace CHUNGKHOANv1
         {
             if (Program.KetNoi() == 0)
             {
-                MessageBox.Show("Kết Nối Thất Bại!", "", MessageBoxButtons.OK);
                 return;
             }
 
             if (CheckPermission())
             {
-                GetStarted();
+                GetStart();
             }
             else
             {
-                MessageBox.Show("Bạn chưa kích hoạt dịch vụ Brokaer");
+                MessageBox.Show("Bạn chưa kích hoạt dịch vụ Broker!");
             }
 
             cHUNGKHOANDataSet.EnforceConstraints = false;
-            this.WindowState = FormWindowState.Normal;
 
             this.lENHDATTableAdapter.Fill(this.cHUNGKHOANDataSet.LENHDAT);
 
             this.lENHKHOPTableAdapter.Fill(this.cHUNGKHOANDataSet.LENHKHOP);
-
-            //this.bANGGIATableAdapter.Fill(this.cHUNGKHOANDataSet.BANGGIA);
 
             DateTime dateTime = DateTime.Now;
             this.dateTimePicker.Text = dateTime.ToString();
@@ -157,9 +148,7 @@ namespace CHUNGKHOANv1
             cmbLoaiGD.ValueMember = "Key";
 
             IDictionary<string, string> loaiLenh = new Dictionary<string, string>();
-            loaiLenh.Add("LO", "Khớp lệnh liên tục(LO)");
-            //loaiLenh.Add("ATO", "Khớp lệnh định kỳ(ATO)");
-            //loaiLenh.Add("ATC", "Khớp lệnh định kỳ(ATC )");
+            loaiLenh.Add("LO", "Khớp lệnh liên tục - LO");
             cmbLoaiLenh.DataSource = new BindingSource(loaiLenh, null);
             cmbLoaiLenh.DisplayMember = "Value";
             cmbLoaiLenh.ValueMember = "Key";
@@ -174,22 +163,28 @@ namespace CHUNGKHOANv1
 
                 if (this.txtMaCP.Text.Trim() == "")
                 {
-                    MessageBox.Show("Vui lòng nhập mã cổ phiếu!");
+                    MessageBox.Show("Mã Cổ Phiếu Không Được Trống!");
                     return;
                 }
                 if (this.txtSoLuong.Text.Trim() == "")
                 {
-                    MessageBox.Show("Vui lòng nhập số lượng!");
+                    MessageBox.Show("   Số Lượng Không Được Trống!");
                     return;
                 }
                 if (this.txtGiaDat.Text.Trim() == "")
                 {
-                    MessageBox.Show("Vui lòng nhập giá đặt !");
+                    MessageBox.Show("        Giá Không Được Trống!");
                     return;
                 }
 
+                if (MessageBox.Show("                        Xác nhận?", "        Thông Báo", MessageBoxButtons.YesNo) == DialogResult.No)
+                {
+                    return;
+                }
+
+
                 DateTime datetime = dateTimePicker.Value;
-                String datetimeFormmat = datetime + "";
+                String datetimeFormmat = datetime.ToString();
                 String[] date = datetimeFormmat.Split(' ');
                 String str = date[0];
 
@@ -208,8 +203,10 @@ namespace CHUNGKHOANv1
                 Program.sqlcmd.Parameters.Add("@soluongMB", SqlDbType.Int).Value = txtSoLuong.Text;
                 Program.sqlcmd.Parameters.Add("@giadatMB", SqlDbType.Float).Value = txtGiaDat.Text;
                 Program.sqlcmd.ExecuteNonQuery();
-                Program.conn.Close();
-                MessageBox.Show("Đặt lệnh mua thành công", "THÔNG BÁO", MessageBoxButtons.OK);
+                //Program.conn.Close();
+
+                MessageBox.Show("      Đặt lệnh thành công!", "        Thông Báo", MessageBoxButtons.OK);
+
                 this.lENHKHOPTableAdapter.Fill(this.cHUNGKHOANDataSet.LENHKHOP);
                 this.lENHDATTableAdapter.Fill(this.cHUNGKHOANDataSet.LENHDAT);
 
@@ -219,7 +216,7 @@ namespace CHUNGKHOANv1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Lỗi lệnh bán.\n" + ex.Message, "", MessageBoxButtons.OK);
+                MessageBox.Show(ex.Message, "        Thông Báo", MessageBoxButtons.OK);
                 return;
             }
         }
